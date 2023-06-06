@@ -22,7 +22,7 @@ public class Serveur {
 		String reject = null;
 		String accesslog = null;
 		String errorlog = null;
-
+		// ##### Lecture fichier xml ###################################################################
 		File f = new File("config/webconf.xml");
 		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 		DocumentBuilder db = dbf.newDocumentBuilder();
@@ -46,6 +46,7 @@ public class Serveur {
 				errorlog = eElement.getElementsByTagName("errorlog").item(0).getTextContent();
 			}
 		}
+		// ################################################################################################
 		ServerSocket server = new ServerSocket(port);
 
 		while (true) {
