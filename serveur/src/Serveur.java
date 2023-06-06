@@ -1,66 +1,27 @@
 import org.springframework.security.web.util.matcher.IpAddressMatcher;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
-import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
 public class Serveur {
 
 	public static void main(String[] args) throws IOException, ParserConfigurationException, SAXException {
-		int port = 8080;
-		String root = "";
-		String accept = "";
-		String reject = "";
-		String accesslog = null;
-		String errorlog = null;
-		// ##### Lecture fichier xml ###################################################################
-		File f = new File("config/webconf.xml");
-		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-		DocumentBuilder db = dbf.newDocumentBuilder();
-		Document document = db.parse(f);
-		document.getDocumentElement().normalize();
-		System.out.println("Root Element :" + document.getDocumentElement().getNodeName());
-		NodeList nList = document.getElementsByTagName("webconf");
-		System.out.println("----------------------------");
-		for (int temp = 0; temp < nList.getLength(); temp++) {
-			Node nNode = nList.item(temp);
-			System.out.println("\nCurrent Element :" + nNode.getNodeName());
-			if (nNode.getNodeType() == Node.ELEMENT_NODE) {
-				Element eElement = (Element) nNode;
-				//System.out.println("webconfig : " + eElement.getAttribute("webconfig"));
-				if(!eElement.getElementsByTagName("port").item(0).getTextContent().equals(""))
-					port = Integer.parseInt(eElement.getElementsByTagName("port").item(0).getTextContent());
-				root = eElement.getElementsByTagName("root").item(0).getTextContent();
-				accept = eElement.getElementsByTagName("accept").item(0).getTextContent();
-				reject = eElement.getElementsByTagName("reject").item(0).getTextContent();
-				accesslog = eElement.getElementsByTagName("accesslog").item(0).getTextContent();
-				errorlog = eElement.getElementsByTagName("errorlog").item(0).getTextContent();
+		// Lecture fichier xml
+		LectureXML xml = new LectureXML("config/webconf.xml");
 
-			}
-		}
-		// ################################################################################################
-
-		ServerSocket server = new ServerSocket(port);
+		ServerSocket server = new ServerSocket(xml.getPort());
 
 		while (true) {
 			Socket socket = server.accept();
-			InetAddress address = socket.getInetAddress();
-			String ip = address.getHostAddress();
+			String ip = socket.getInetAddress().getHostAddress();
 
-			boolean connexionOK = false;
-			if(new IpAddressMatcher(accept).matches(ip)){
-				if(!new IpAddressMatcher(reject).matches(ip)){
+
+			if(new IpAddressMatcher(xml.getAccept()).matches(ip)){
+				if(!new IpAddressMatcher(xml.getReject()).matches(ip)){
 					System.out.println("connexion OK");
-					connexionOK = true;
 				}else {
 					System.out.println("connexion refusée");
 					socket.close();
@@ -68,43 +29,39 @@ public class Serveur {
 				}
 			}
 
-
-				System.out.println(socket.getRemoteSocketAddress());
-				BufferedReader entree = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-				DataOutputStream sortie = new DataOutputStream(socket.getOutputStream());
-				try{
-					String ligne = entree.readLine();
-					String[] demande = ligne.split(" ");
-					int i = 0;
+			BufferedReader entree = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+			DataOutputStream sortie = new DataOutputStream(socket.getOutputStream());
+			try{
+				String ligne = entree.readLine();
+				String[] demande = ligne.split(" ");
+				int i = 0;
+				System.out.println((i++) + "\t" + ligne);
+				while (!ligne.equals("")) {
+					ligne = entree.readLine();
 					System.out.println((i++) + "\t" + ligne);
-					while (!ligne.equals("")) {
-						ligne = entree.readLine();
-						System.out.println((i++) + "\t" + ligne);
-					}
-
-					File file = new File(root+demande[1]);
-					if(file.exists()){
-						FileInputStream fichier = new FileInputStream(file);
-						byte[] contenu = new byte[(int) file.length()];
-						fichier.read(contenu);
-						fichier.close();
-
-
-						sortie.writeBytes("HTTP/1.1 200 OK\r\n");
-						sortie.writeBytes("Content-Type: text/html\r\n");
-						sortie.writeBytes("Content-Length: " + contenu.length + "\r\n");
-						sortie.writeBytes("\r\n");
-						sortie.write(contenu);
-						sortie.flush();
-						fichier.close();
-					} else{
-						sortie.writeBytes("HTTP/1.1 404 Not Found\r\n");
-						sortie.writeBytes("\r\n");
-					}
-				}catch (Exception e){
-
 				}
-				socket.close();
+
+				File file = new File(xml.getRoot()+demande[1]);
+				if(file.exists()){
+					FileInputStream fichier = new FileInputStream(file);
+					byte[] contenu = new byte[(int) file.length()];
+					fichier.read(contenu);
+					fichier.close();
+					sortie.writeBytes("HTTP/1.1 200 OK\r\n");
+					sortie.writeBytes("Content-Type: text/html\r\n");
+					sortie.writeBytes("Content-Length: " + contenu.length + "\r\n");
+					sortie.writeBytes("\r\n");
+					sortie.write(contenu);
+					sortie.flush();
+					fichier.close();
+				} else{
+					sortie.writeBytes("HTTP/1.1 404 Not Found\r\n");
+					sortie.writeBytes("\r\n");
+				}
+			}catch (Exception e){
+
+			}
+			socket.close();
 
 
 		}
