@@ -1,13 +1,52 @@
+import org.w3c.dom.Document;
+
+import java.io.File;
+import java.io.IOException;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Scanner;
 
 public class Serveur {
 
-	public static void main(String[] args) throws IOException {
-		ServerSocket server = new ServerSocket(args.length > 0 ? Integer.parseInt(args[0]) : 8080);
-		String root = "www";
+	public static void main(String[] args) throws IOException, ParserConfigurationException, SAXException {
+		int port = 8080;
+		String root = null;
+		String accept = null;
+		String reject = null;
+		String accesslog = null;
+		String errorlog = null;
+
+		File f = new File("config/webconf.xml");
+		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+		DocumentBuilder db = dbf.newDocumentBuilder();
+		Document document = db.parse(f);
+		document.getDocumentElement().normalize();
+		System.out.println("Root Element :" + document.getDocumentElement().getNodeName());
+		NodeList nList = document.getElementsByTagName("webconf");
+		System.out.println("----------------------------");
+		for (int temp = 0; temp < nList.getLength(); temp++) {
+			Node nNode = nList.item(temp);
+			System.out.println("\nCurrent Element :" + nNode.getNodeName());
+			if (nNode.getNodeType() == Node.ELEMENT_NODE) {
+				Element eElement = (Element) nNode;
+				//System.out.println("webconfig : " + eElement.getAttribute("webconfig"));
+				if(!eElement.getElementsByTagName("port").item(0).getTextContent().equals(""))
+					port = Integer.parseInt(eElement.getElementsByTagName("port").item(0).getTextContent());
+				root = eElement.getElementsByTagName("root").item(0).getTextContent();
+				accept = eElement.getElementsByTagName("accept").item(0).getTextContent();
+				reject = eElement.getElementsByTagName("reject").item(0).getTextContent();
+				accesslog = eElement.getElementsByTagName("accesslog").item(0).getTextContent();
+				errorlog = eElement.getElementsByTagName("errorlog").item(0).getTextContent();
+			}
+		}
+		ServerSocket server = new ServerSocket(port);
 
 		while (true) {
 			Socket socket = server.accept();
@@ -50,6 +89,7 @@ public class Serveur {
 
 			socket.close();
 		}
+
 
 	}
 
