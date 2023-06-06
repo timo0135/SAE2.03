@@ -1,15 +1,15 @@
+import org.springframework.security.web.util.matcher.IpAddressMatcher;
 import org.w3c.dom.Document;
-
-import java.io.File;
-import java.io.IOException;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -17,9 +17,9 @@ public class Serveur {
 
 	public static void main(String[] args) throws IOException, ParserConfigurationException, SAXException {
 		int port = 8080;
-		String root = null;
-		String accept = null;
-		String reject = null;
+		String root = "";
+		String accept = "";
+		String reject = "";
 		String accesslog = null;
 		String errorlog = null;
 		// ##### Lecture fichier xml ###################################################################
@@ -44,51 +44,68 @@ public class Serveur {
 				reject = eElement.getElementsByTagName("reject").item(0).getTextContent();
 				accesslog = eElement.getElementsByTagName("accesslog").item(0).getTextContent();
 				errorlog = eElement.getElementsByTagName("errorlog").item(0).getTextContent();
+
 			}
 		}
 		// ################################################################################################
+
 		ServerSocket server = new ServerSocket(port);
 
 		while (true) {
 			Socket socket = server.accept();
-			BufferedReader entree = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-			DataOutputStream sortie = new DataOutputStream(socket.getOutputStream());
-			try{
-				String ligne = entree.readLine();
-				String[] demande = ligne.split(" ");
-				int i = 0;
-				System.out.println((i++) + "\t" + ligne);
-				while (!ligne.equals("")) {
-					ligne = entree.readLine();
-					System.out.println((i++) + "\t" + ligne);
+			InetAddress address = socket.getInetAddress();
+			String ip = address.getHostAddress();
+
+			boolean connexionOK = false;
+			if(new IpAddressMatcher(accept).matches(ip)){
+				if(!new IpAddressMatcher(reject).matches(ip)){
+					System.out.println("connexion OK");
+					connexionOK = true;
+				}else {
+					System.out.println("connexion refusée");
+					socket.close();
 				}
-
-				File file = new File(root+demande[1]);
-				if(file.exists()){
-					FileInputStream fichier = new FileInputStream(file);
-					byte[] contenu = new byte[(int) file.length()];
-					fichier.read(contenu);
-					fichier.close();
-
-
-					sortie.writeBytes("HTTP/1.1 200 OK\r\n");
-					sortie.writeBytes("Content-Type: text/html\r\n");
-					sortie.writeBytes("Content-Length: " + contenu.length + "\r\n");
-					sortie.writeBytes("\r\n");
-					sortie.write(contenu);
-					sortie.flush();
-					fichier.close();
-				} else{
-					sortie.writeBytes("HTTP/1.1 404 Not Found\r\n");
-					sortie.writeBytes("\r\n");
-				}
-
-			}catch (Exception e){
-
 			}
 
 
-			socket.close();
+				System.out.println(socket.getRemoteSocketAddress());
+				BufferedReader entree = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+				DataOutputStream sortie = new DataOutputStream(socket.getOutputStream());
+				try{
+					String ligne = entree.readLine();
+					String[] demande = ligne.split(" ");
+					int i = 0;
+					System.out.println((i++) + "\t" + ligne);
+					while (!ligne.equals("")) {
+						ligne = entree.readLine();
+						System.out.println((i++) + "\t" + ligne);
+					}
+
+					File file = new File(root+demande[1]);
+					if(file.exists()){
+						FileInputStream fichier = new FileInputStream(file);
+						byte[] contenu = new byte[(int) file.length()];
+						fichier.read(contenu);
+						fichier.close();
+
+
+						sortie.writeBytes("HTTP/1.1 200 OK\r\n");
+						sortie.writeBytes("Content-Type: text/html\r\n");
+						sortie.writeBytes("Content-Length: " + contenu.length + "\r\n");
+						sortie.writeBytes("\r\n");
+						sortie.write(contenu);
+						sortie.flush();
+						fichier.close();
+					} else{
+						sortie.writeBytes("HTTP/1.1 404 Not Found\r\n");
+						sortie.writeBytes("\r\n");
+					}
+				}catch (Exception e){
+
+				}
+				socket.close();
+
+
 		}
 
 
