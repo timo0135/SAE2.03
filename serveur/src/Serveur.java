@@ -41,7 +41,15 @@ public class Serveur {
 					ligne = entree.readLine();
 					System.out.println((i++) + "\t" + ligne);
 				}
-
+				if(demande[1].equals("status")){
+					String source = "<!DOCTYPE html>\n" +
+							"<html>\n" +
+							"  <head>\n" +
+							"    <meta charset=\"utf-8\">\n" +
+							"\n" +
+							"    <title>Status</title>"+
+							;
+				}
 				File file = new File(xml.getRoot()+demande[1]);
 				if(file.exists()){
 					FileInputStream fichier = new FileInputStream(file);
