@@ -17,6 +17,7 @@ public class Log {
 		String message = dateFormat.format(date) + " " + page + " " + ip + " " + status;
 
 		this.writer.println(message);
+		System.out.println(message);
 		this.writer.flush();
 	}
 

@@ -10,6 +10,8 @@ public class Serveur {
 
 	public static void main(String[] args) throws IOException, ParserConfigurationException, SAXException {
 		// Lecture fichier xml
+		System.out.println(getDisqueDisponible());
+
 		LectureXML xml = new LectureXML("config/webconf.xml");
 		Log logAccess = new Log(xml.getAccesslog());
 		Log logError = new Log(xml.getErrorlog());
@@ -65,10 +67,15 @@ public class Serveur {
 
 			}
 			socket.close();
-			logAccess.close();
-			logError.close();
 
 		}
 	}
 
+	public static long getMemoireNonUtilise() {
+		return Runtime.getRuntime().freeMemory();
+	}
+
+	public static long getDisqueDisponible() {
+		return new File("/").getFreeSpace();
+	}
 }
