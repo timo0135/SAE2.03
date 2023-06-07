@@ -5,6 +5,9 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.zip.GZIPOutputStream;
 
 public class Serveur {
 
@@ -41,14 +44,19 @@ public class Serveur {
 					ligne = entree.readLine();
 					System.out.println((i++) + "\t" + ligne);
 				}
-				if(demande[1].equals("status")){
-					String source = "<!DOCTYPE html>\n" +
-							"<html>\n" +
-							"  <head>\n" +
-							"    <meta charset=\"utf-8\">\n" +
-							"\n" +
-							"    <title>Status</title>"+
-							;
+				if(demande[1].equals("/status")){
+
+					String source = "<!DOCTYPE html><html><head><title>status</title></head><body><h1>status</h1><p>memoire non utilis&eacute;e : "+getMemoireNonUtilise()+"</p><p>disque disponible : "+getDisqueDisponible()+"</p><p>processus en cours : "+getProcessusEnCours()+"</p></body></html>";
+					sortie.writeBytes("HTTP/1.1 200 OK\r\n");
+					sortie.writeBytes("Content-Encoding: gzip\r\n");
+					sortie.writeBytes("Content-Type: text/html\r\n");
+					sortie.writeBytes("Content-Length: " + source.length() + "\r\n");
+					sortie.writeBytes("\r\n");
+					GZIPOutputStream gzip = new GZIPOutputStream(sortie);
+					gzip.write(source.getBytes());
+					gzip.close();
+
+					sortie.flush();
 				}
 				File file = new File(xml.getRoot()+demande[1]);
 				if(file.exists()){
