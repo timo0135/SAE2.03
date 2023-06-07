@@ -11,13 +11,14 @@ public class Serveur {
 	public static void main(String[] args) throws IOException, ParserConfigurationException, SAXException {
 		// Lecture fichier xml
 		LectureXML xml = new LectureXML("config/webconf.xml");
+		Log logAccess = new Log(xml.getAccesslog());
+		Log logError = new Log(xml.getErrorlog());
 
 		ServerSocket server = new ServerSocket(xml.getPort());
 
 		while (true) {
 			Socket socket = server.accept();
 			String ip = socket.getInetAddress().getHostAddress();
-
 
 			if(new IpAddressMatcher(xml.getAccept()).matches(ip)){
 				if(!new IpAddressMatcher(xml.getReject()).matches(ip)){
@@ -54,19 +55,20 @@ public class Serveur {
 					sortie.write(contenu);
 					sortie.flush();
 					fichier.close();
+					logAccess.ajouter(demande[1], ip, "200");
 				} else{
 					sortie.writeBytes("HTTP/1.1 404 Not Found\r\n");
 					sortie.writeBytes("\r\n");
+					logError.ajouter(demande[1], ip, "404");
 				}
 			}catch (Exception e){
 
 			}
 			socket.close();
-
+			logAccess.close();
+			logError.close();
 
 		}
-
-
 	}
 
 }
