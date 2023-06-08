@@ -1,3 +1,4 @@
+import org.springframework.http.converter.json.GsonBuilderUtils;
 import org.springframework.security.web.util.matcher.IpAddressMatcher;
 import org.xml.sax.SAXException;
 
@@ -125,7 +126,7 @@ public class Serveur {
 	}
 
 	public String findCode(String page) {
-		Pattern pattern = Pattern.compile("<code interpreteur=\"(.*?)\">(.*?)</code>");
+		Pattern pattern = Pattern.compile("<code interpreteur=\"(.*?)\">(.*?)</code>", Pattern.MULTILINE | Pattern.DOTALL);
 		Matcher matcher = pattern.matcher(page);
 		String resultat = page;
 		while (matcher.find()) {
@@ -139,23 +140,19 @@ public class Serveur {
 	}
 
 	public String executeCode(String interpreteur, String code) {
+		ProcessBuilder pb = new ProcessBuilder(interpreteur, "-c", code);
+		pb.redirectErrorStream(true);
 		try {
-			Process process = Runtime.getRuntime().exec(interpreteur);
-			PrintWriter writer = new PrintWriter(new OutputStreamWriter(process.getOutputStream(), StandardCharsets.UTF_8));
-			String result = "";
-			for (String ligneCode : code.split("\n")) {
-				writer.println(ligneCode);
-				writer.close();
-				BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8));
-				String ligne;
-				while ((ligne = reader.readLine()) != null) {
-					result += ligne + "\n";
-				}
-				reader.close();
+			Process p = pb.start();
+			BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
+			String ligne = br.readLine();
+			String resultat = "";
+			while (ligne != null) {
+				resultat += ligne;
+				ligne = br.readLine();
 			}
-			return result;
+			return resultat;
 		} catch (IOException e) {
-			System.out.println("Erreur d'execution du code : " + code);
 			e.printStackTrace();
 		}
 		return "";
