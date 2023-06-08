@@ -15,9 +15,8 @@ public class Log {
 		Date date = new Date();
 		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		String message = dateFormat.format(date) + " " + page + " " + ip + " " + status;
-
+		System.out.println("Réponse : " + status);
 		this.writer.println(message);
-		System.out.println(message);
 		this.writer.flush();
 	}
 

@@ -9,42 +9,35 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class LectureXML {
 	// attributs
 	private int port = 8080;
 	private String root = "";
-	private String accept = "";
-	private String reject = "";
+	private ArrayList<String> accept = new ArrayList<>();
+	private ArrayList<String> reject = new ArrayList<>();
 	private String accesslog = "";
 	private String errorlog = "";
 
 	public LectureXML(String chemin) throws ParserConfigurationException, IOException, SAXException {
-
 		File f = new File(chemin);
 		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 		DocumentBuilder db = dbf.newDocumentBuilder();
 		Document document = db.parse(f);
 		document.getDocumentElement().normalize();
-		System.out.println("Root Element :" + document.getDocumentElement().getNodeName());
-		NodeList nList = document.getElementsByTagName("webconf");
-		System.out.println("----------------------------");
-		for (int temp = 0; temp < nList.getLength(); temp++) {
-			Node nNode = nList.item(temp);
-			System.out.println("\nCurrent Element :" + nNode.getNodeName());
-			if (nNode.getNodeType() == Node.ELEMENT_NODE) {
-				Element eElement = (Element) nNode;
-				//System.out.println("webconfig : " + eElement.getAttribute("webconfig"));
-				if(!eElement.getElementsByTagName("port").item(0).getTextContent().equals(""))
-					this.port = Integer.parseInt(eElement.getElementsByTagName("port").item(0).getTextContent());
-				this.root = eElement.getElementsByTagName("root").item(0).getTextContent();
-				this.accept = eElement.getElementsByTagName("accept").item(0).getTextContent();
-				this.reject = eElement.getElementsByTagName("reject").item(0).getTextContent();
-				this.accesslog = eElement.getElementsByTagName("accesslog").item(0).getTextContent();
-				this.errorlog = eElement.getElementsByTagName("errorlog").item(0).getTextContent();
 
-			}
-		}
+		Element noeudPrincipal = (Element) document.getElementsByTagName("webconf").item(0);
+
+		if(!noeudPrincipal.getElementsByTagName("port").item(0).getTextContent().equals(""))
+			this.port = Integer.parseInt(noeudPrincipal.getElementsByTagName("port").item(0).getTextContent());
+		this.root = noeudPrincipal.getElementsByTagName("root").item(0).getTextContent();
+		for (int i = 0; i < noeudPrincipal.getElementsByTagName("accept").getLength(); i++)
+			this.accept.add(noeudPrincipal.getElementsByTagName("accept").item(i).getTextContent());
+		for (int i = 0; i < noeudPrincipal.getElementsByTagName("reject").getLength(); i++)
+			this.reject.add(noeudPrincipal.getElementsByTagName("reject").item(i).getTextContent());
+		this.accesslog = noeudPrincipal.getElementsByTagName("accesslog").item(0).getTextContent();
+		this.errorlog = noeudPrincipal.getElementsByTagName("errorlog").item(0).getTextContent();
 	}
 
 	public int getPort() {
@@ -55,11 +48,11 @@ public class LectureXML {
 		return root;
 	}
 
-	public String getAccept() {
+	public ArrayList<String> getAccept() {
 		return accept;
 	}
 
-	public String getReject() {
+	public ArrayList<String> getReject() {
 		return reject;
 	}
 
