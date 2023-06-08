@@ -1,4 +1,3 @@
-import org.springframework.http.converter.json.GsonBuilderUtils;
 import org.springframework.security.web.util.matcher.IpAddressMatcher;
 import org.xml.sax.SAXException;
 
@@ -6,7 +5,6 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPOutputStream;
@@ -31,12 +29,12 @@ public class Serveur {
 	}
 
 	public boolean accepterIp(String ip) {
-		for (String ipAccept : xml.getAccept())
-			if (new IpAddressMatcher(ipAccept).matches(ip))
-				return true;
 		for (String ipReject : xml.getReject())
 			if (new IpAddressMatcher(ipReject).matches(ip))
 				return false;
+		for (String ipAccept : xml.getAccept())
+			if (new IpAddressMatcher(ipAccept).matches(ip))
+				return true;
 		return xml.getAccept().size() == 0;
 	}
 
