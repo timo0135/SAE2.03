@@ -29,15 +29,30 @@ public class LectureXML {
 
 		Element noeudPrincipal = (Element) document.getElementsByTagName("webconf").item(0);
 
-		if(!noeudPrincipal.getElementsByTagName("port").item(0).getTextContent().equals(""))
+		if (noeudPrincipal.getElementsByTagName("port").getLength() == 0)
+			this.port = 80;
+		else
 			this.port = Integer.parseInt(noeudPrincipal.getElementsByTagName("port").item(0).getTextContent());
-		this.root = noeudPrincipal.getElementsByTagName("root").item(0).getTextContent();
+
+		if (noeudPrincipal.getElementsByTagName("root").getLength() == 0)
+			this.root = "www";
+		else
+			this.root = noeudPrincipal.getElementsByTagName("root").item(0).getTextContent();
+
 		for (int i = 0; i < noeudPrincipal.getElementsByTagName("accept").getLength(); i++)
 			this.accept.add(noeudPrincipal.getElementsByTagName("accept").item(i).getTextContent());
 		for (int i = 0; i < noeudPrincipal.getElementsByTagName("reject").getLength(); i++)
 			this.reject.add(noeudPrincipal.getElementsByTagName("reject").item(i).getTextContent());
-		this.accesslog = noeudPrincipal.getElementsByTagName("accesslog").item(0).getTextContent();
-		this.errorlog = noeudPrincipal.getElementsByTagName("errorlog").item(0).getTextContent();
+
+		if (noeudPrincipal.getElementsByTagName("accesslog").getLength() == 0)
+			this.accesslog = "log/access.log";
+		else
+			this.accesslog = noeudPrincipal.getElementsByTagName("accesslog").item(0).getTextContent();
+
+		if (noeudPrincipal.getElementsByTagName("errorlog").getLength() == 0)
+			this.errorlog = "log/error.log";
+		else
+			this.errorlog = noeudPrincipal.getElementsByTagName("errorlog").item(0).getTextContent();
 	}
 
 	public int getPort() {
